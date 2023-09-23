@@ -132,7 +132,7 @@ sterling::operator double() {
 }
 
 sterling::operator dollars() {
-	long double dlrs = double(sterling(pounds, shillings, pence));
+	long double dlrs = 50 * double(sterling(pounds, shillings, pence));
 	return dollars(dlrs);
 }
 
