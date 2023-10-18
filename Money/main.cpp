@@ -1,13 +1,8 @@
 #include <iostream>
 #include <stdio.h>
-#include <conio.h>
 #include <iomanip>
-#include <cstring>
-#include <string.h>
 #include <string>
-#include <windows.h>
 #include <sstream>
-#include <math.h>
 
 using namespace std;
 
@@ -23,7 +18,7 @@ public:
 
 	void get_dollars() {
 		char str[19];
-		cout << "Enter a count of money: "; cin >> str;
+		cout << "Enter a sum in dollars: "; cin >> str;
 		mstold(str);
 	}
 	void put_dollars() {
@@ -38,7 +33,7 @@ public:
 };
 
 class sterling {
-private:
+protected:
 	long pounds;
 	int shillings;
 	int pence;
@@ -54,9 +49,12 @@ public:
 
 	void get_sterling() {
 		char dummy_point;
-		cout << "Enter a count of sterling (format J*.*.*): J";
+		cout << "Amount of money in sterling (format J*.*.*): J";
 		cin >> pounds >> dummy_point >> shillings >> dummy_point >> pence;
-		
+		sterling_correctness();
+	}
+
+	void sterling_correctness() {
 		if (pounds < 0 || shillings < 0 || pence < 0) {
 			cout << "\nIncorrect! Values must to be positive. \nTry again.\n\n";
 			get_sterling();
@@ -69,7 +67,7 @@ public:
 	}
 
 	void put_sterling() const {
-		cout << "J" << pounds << "." << shillings << "." << pence << endl;
+		cout << "J" << pounds << "." << shillings << "." << pence;
 	}
 
 	sterling operator+(sterling) const;
@@ -81,19 +79,79 @@ public:
 	operator dollars();
 };
 
+class sterfrac : public sterling {
+private:
+	int eighths;
+public:
+	sterfrac() : sterling() {}
+	sterfrac(double a) : sterling(a), eighths(0) {}
+	sterfrac(long p, int s, int pe, int e) : sterling(p,s,pe), eighths(e) {}
+
+	void get_sterfrac() {
+		char dummy;
+		int denominator;
+		cout << "Amount of money in sterling (format J*.*.*-*/8): J";
+		cin >> pounds >> dummy >> shillings >> dummy >> pence >> dummy >> eighths >> dummy >> denominator ;
+		sterling::sterling_correctness();
+		half_farthing_correctness(denominator);
+		switch (denominator) {
+		case 8: break;
+		case 4: eighths *= 2; break;
+		case 2: eighths *= 4; break;
+		}
+	}
+	void half_farthing_correctness(int d){
+		if (eighths > 7 || eighths < 0) {
+			cout << "Incorrect number of half-farthings! Try again." << endl;
+			get_sterfrac();
+		}
+		if (d != 2 && d != 4 && d != 8) {
+			cout << "Incorrect value of denominator! Try again.";
+			get_sterfrac();
+		}
+	}
+	void put_sterfrac() {
+		sterling::put_sterling();
+		cout << "-";
+		switch (eighths) {
+		case 2: cout << "1/4"; break;
+		case 4: cout << "1/2"; break;
+		case 6: cout << "3/4"; break;
+		default: cout << eighths << "/8"; break;
+		}
+	}
+	sterfrac operator+(sterfrac s2) const {
+		sterfrac s(sterling(pounds, shillings, pence) + sterling(s2.pounds, s2.shillings, s2.pence));
+		s.eighths = eighths + s2.eighths;
+		if (s.eighths > 7) {
+			s.eighths -= 8;
+			s.pence++;
+		}
+		return s;
+	}
+};
+
 int main() {
-	sterling s1;
+	sterfrac s1, s2;
+	s1.get_sterfrac();
+	s1.put_sterfrac(); cout << endl;
+	s2.get_sterfrac();
+	s2.put_sterfrac(); cout << endl;
+	sterfrac s = s1 + s2;
+	s.put_sterfrac(); cout << endl;
+	
+	/*sterling s1;
 	s1.get_sterling();
-	s1.put_sterling();
+	s1.put_sterling(); cout << endl;
 	dollars d1 = s1;
-	d1.put_dollars();
+	d1.put_dollars();*/
 
 	/*dollars a, b, c;
 	long double time_oneitem, item_counter;
 	cout << "1: "; a.get_dollars();
-	cout << "2: "; b.get_dollars();
+	cout << "2: "; b.get_dollars();*/
 
-	c = a + b; cout << "1st$ + 2nd$ = "; c.put_dollars();
+	/*c = a + b; cout << "1st$ + 2nd$ = "; c.put_dollars();
 	c = a - b; cout << "1st$ - 2nd$ = "; c.put_dollars();
 	cout << "Time for one item: "; cin >> time_oneitem;
 	c = a * time_oneitem; cout << "Total price for one item per entered time: "; c.put_dollars();
@@ -204,7 +262,7 @@ void dollars::ldtoms(long double m) {
 		temp = ms[0]; ms[0] = ms[1]; ms[1] = temp;
 	} // fixing negative number's format for writing 
 
-	cout << ms << endl;
+	cout << ms;
 }
 
 long double dollars::mstold(char m[]) {
